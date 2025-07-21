@@ -1,17 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Future Prediction</title>
+    <meta charset="UTF-8">
+    <title>Future Predictor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+    </style>
 </head>
 <body>
-  <h1>Future Predictor 🔮</h1>
-  <form id="astroForm">
-    <input type="text" id="name" placeholder="Full Name" required><br>
-    <input type="date" id="dob" required><br>
-    <input type="time" id="tob" required><br>
-    <input type="text" id="pob" placeholder="Place of Birth" required><br>
-    <button type="submit">Predict Future</button>
-  </form>
-  <script src="script.js"></script>
+    <h1>Future Prediction</h1>
+    <form id="predictionForm">
+        <label for="name">Name</label>
+        <input type="text" id="name" required>
+
+        <label for="dob">Date of Birth</label>
+        <input type="date" id="dob" required>
+
+        <label for="tob">Time of Birth</label>
+        <input type="time" id="tob" required>
+
+        <label for="pob">Place of Birth</label>
+        <input type="text" id="pob" required>
+
+        <button type="submit">Predict</button>
+    </form>
+
+    <script>
+        document.getElementById("predictionForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById("name").value;
+            const dob = document.getElementById("dob").value;
+            const tob = document.getElementById("tob").value;
+            const pob = document.getElementById("pob").value;
+
+            fetch("https://future-prediction-app.onrender.com/predict", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ name, dob, tob, pob })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Prediction failed");
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "future_prediction.pdf";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            })
+            .catch(error => {
+                alert("Error: " + error.message);
+            });
+        });
+    </script>
 </body>
 </html>
