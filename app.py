@@ -1,52 +1,40 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, make_response
+from fpdf import FPDF
 from flask_cors import CORS
-from geopy.geocoders import Nominatim
-import swisseph as swe
-from reportlab.pdfgen import canvas
 import io
-import datetime
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Allow cross-origin requests
 
-swe.set_ephe_path("./ephemeris")
-
-def get_lat_lon(place):
-    geolocator = Nominatim(user_agent="astro-app")
-    location = geolocator.geocode(place)
-    return location.latitude, location.longitude
-
-def get_positions(jd):
-    sun = swe.calc_ut(jd, swe.SUN)[0]
-    moon = swe.calc_ut(jd, swe.MOON)[0]
-    return sun[0], moon[0]
-
-def generate_prediction_pdf(name, dob, tob, pob):
-    lat, lon = get_lat_lon(pob)
-    dt_obj = datetime.datetime.strptime(f"{dob} {tob}", "%Y-%m-%d %H:%M")
-    jd = swe.julday(dt_obj.year, dt_obj.month, dt_obj.day, dt_obj.hour + dt_obj.minute / 60.0)
-
-    sun_deg, moon_deg = get_positions(jd)
-
-    buffer = io.BytesIO()
-    c = canvas.Canvas(buffer)
-    c.drawString(100, 800, f"Future Prediction Report for {name}")
-    c.drawString(100, 780, f"DOB: {dob}, TOB: {tob}, POB: {pob}")
-    c.drawString(100, 760, f"Sun Position: {sun_deg:.2f}°")
-    c.drawString(100, 740, f"Moon Position: {moon_deg:.2f}°")
-    c.drawString(100, 700, f"Prediction: You will face positive transformation in career and relationships.")
-    c.showPage()
-    c.save()
-    buffer.seek(0)
-    return buffer
+@app.route("/")
+def home():
+    return "Future Prediction API is live!"
 
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.json
-    pdf = generate_prediction_pdf(
-        data['name'], data['dob'], data['tob'], data['pob']
-    )
-    return send_file(pdf, download_name="future_prediction.pdf", as_attachment=True)
+    name = data.get("name")
+    dob = data.get("dob")
+    time = data.get("time")
+    place = data.get("place")
+
+    # Dummy prediction logic
+    prediction = f"Dear {name}, based on your birth date ({dob}), time ({time}), and place ({place}), you have a bright future ahead!"
+
+    # Create PDF
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.multi_cell(0, 10, prediction)
+
+    pdf_stream = io.BytesIO()
+    pdf.output(pdf_stream)
+    pdf_stream.seek(0)
+
+    response = make_response(send_file(pdf_stream, download_name="future_prediction.pdf", as_attachment=True))
+    response.headers["Content-Type"] = "application/pdf"
+    return response
 
 if __name__ == "__main__":
     app.run(debug=True)
+
